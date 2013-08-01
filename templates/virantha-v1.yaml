@@ -1,0 +1,45 @@
+contact:
+    name: Virantha N. Ekanayake
+    address: 15 S. Chester St, Baltimore, MD
+    phone: (607) 339-8549
+    email: virantha@gmail.com
+    www: http://www.virantha.com
+
+education:
+    - 
+        degree: PhD and MSc
+        university: Cornell University
+        address: Ithaca, NY
+        date: 2005/2003
+        field: Computer Engineering
+        thesis: Not important
+    - 
+        degree: BE and AB
+        university: Dartmouth College
+        address: Hanover, NH
+        date: 1999
+        field: Electrical Engineering/Computer Science
+        thesis: Not important
+        honors: magna cum laude with high honors in major
+
+experience:
+    - 
+        company: Achronix Semiconductor Corporation
+        location: Santa Clara, CA
+        position: Co-founder and Chief Technology Officer
+        date: "'09 to date"
+        summary: >
+            Led full-custom circuit design teams and R&D efforts in
+            high-speed reconfigurable dynamic and static circuits utilizing
+            both synchronous and asynchronous logic.  Wrote patents and
+            managed intellectual property development.  Co-author on 16
+            granted and pending patents.  Individual contributions included
+            CAD flow development, circuit design, simulation, verification,
+            and layout management.  
+
+    - 
+        company: Achronix Semiconductor Corporation 
+        location: Santa Clara, CA 
+        position: Co-founder and Director of Engineering 
+        date: "'05 to '09"
+        
