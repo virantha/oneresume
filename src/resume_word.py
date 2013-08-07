@@ -18,6 +18,8 @@ import os,shutil
 from lxml import etree
 import logging
 import itertools
+import copy
+from collections import OrderedDict
 
 class WordResume(object):
 
@@ -71,133 +73,138 @@ class WordResume(object):
             all_txt.append(txt)
         return ''.join(all_txt)
 
-    def _collapse_tag_runs_in_paragraph(self, first_run, first_run_text_element):
-        # Because we know a tag should really not be split at all
-        self._assert_element_is(first_run, 'r')
-        self._assert_element_is(first_run_text_element, 't')
-        all_txt = [self._get_all_text_in_node(first_run)]
-        for e in first_run.itersiblings(tag=etree.Element):
-            if self._check_element_is(e, 'r'):
-                for txt in e.itertext(tag=etree.Element):
-                    if txt is not None:
-                        all_txt.append(txt)
-                    e.getparent().remove(e)
-            else:
-                # Probably a bookmark or some such nonsense from Word,
-                # so remove all these nodes inside a run
-                e.getparent().remove(e)
-        logging.debug("Collapsing: found text in runs: %s" % all_txt)
-        all_txt = ''.join(all_txt)
-
-        #TODO: doesn't this preclude arbitrary text after a close tag?
-        assert all_txt.endswith(']')
-        first_run_text_element.text = all_txt
-
-
-    def _find_all_enclosing_subtags(self, etree):
-        # Find all [] loops and collaps all tags inside it, and return
-        # a hash of tag text to text element containing it
+    def _find_subtags_in_loop(self, my_etree):
         mTag = r"""\[(?P<tag>[\s\w\_]+)\]"""
-        tags = {}
-        open_bracket_elements = etree.xpath('.//w:p//w:t[text()[contains(., "[")]]', namespaces=self.nsprefixes)
-        loop_open = open_bracket_elements[0] 
-        for open_subtag in open_bracket_elements[1:]:
-            # Need to collapse all runs containing text between [ and ] 
-            # into one run.
-            # See if this already holds true for this open_subtag:
-             # [blah] [blk] 
-            subtags = re.findall(mTag, open_subtab.text)
-            if mTag.search(open_subtab.text):
-                continue
-            # Go to parent paragraph
-            # INVARIANT: each subtag must be wholly contained withing a paragraph
-            run = open_subtags.getparent()
-            self._assert_element_is(run, 'r')
-            paragraph = run.getparent()
-            self._assert_element_is(paragraph, 'p')
+        tags = OrderedDict()
 
-            
+        # Get the parent paragraph 
+        self._assert_element_is(my_etree, 't')
+        run = my_etree.getparent()
+        self._assert_element_is(run, 'r')
+        paragraph = run.getparent()
+        self._assert_element_is(paragraph, 'p')
 
-    def _find_tag_bodies(self, etree, tags_to_find):
-        # Find the [
-        # Iterate through siblings until ]
-        #   copy this structure, and insert into parent
-        mTag = r"""\[(?P<tag>[\s\w\_]+)\]"""
-        open_bracket_elements = etree.xpath('.//w:p//w:t[text()[contains(., "[")]]', namespaces=self.nsprefixes)
-        loop_open = open_bracket_elements[0] 
-        # Everything after this are bodies
-        for e in open_bracket_elements[1:]:
-            run = e.getparent()
-            self._assert_element_is(run, 'r')
-            paragraph = run.getparent()
-            self._assert_element_is(paragraph, 'p')
-            e_text = self._get_all_text_in_node(paragraph)
-            grps = re.findall(mTag, e_text) 
+        loop_done = False
+        loop_tree = None
+        for node, text in self._itersiblingtext(paragraph):
+            if '<' in text:
+                logging.debug("Found <")
+                inside_loop = True
+                ind = text.find('<') + 1
+                text = text[ind:]
+                loop_tree = etree.Element(copy.deepcopy(node.getparent().getparent()))
+            if '>' in text:
+                assert inside_loop
+                ind = text.find( '>')
+                text = text[:ind]
+                loop_done = True
+            if inside_loop:
+                tag_text = re.findall(mTag, text)
+                if tag_text:
+                    logging.debug("Found grps %s" % (','.join(tag_text)))
+                for tag in tag_text:
+                    tag = tag.lower()
+                    tags[tag] = node
+                if loop_done:
+                    loop_done = False
+                    inside_loop = False
+                    break
+        return tags
 
-
-    def _find_tags(self, etree, tags_to_find):
+    def _find_tags(self, my_etree, tags_to_find, char_to_stop_on=None):
         tags = {}
         logging.debug("Looking for tags: %s" % (','.join(tags_to_find)))
         mTag = r"""\[(?P<tag>[\s\w\_]+)\]"""
-        open_bracket_elements = etree.xpath('.//w:p//w:t[text()[contains(., "[")]]', namespaces=self.nsprefixes)
-        # Each text entry must be part of a run
-        # So, get the parent and iterate through it to get all the text
-        # Then, do a match for [text], and return the tag to find
-        for e in open_bracket_elements:
-            # Get the parent run
-            run = e.getparent()
-            self._assert_element_is(run, 'r')
-            paragraph = run.getparent()
-            self._assert_element_is(paragraph, 'p')
-            e_text = self._get_all_text_in_node(paragraph)
-            grps = re.findall(mTag, e_text) 
-            logging.debug("Found grps %s" % (','.join(grps)))
-            for grp in grps:
-                grp = grp.lower()
-                if grp in tags_to_find:
-                    self._collapse_tag_runs_in_paragraph(run, e)
-                    e.text = e.text[1:-1] # Remove brackets from tag
-                    print ("Collapsed tag %s" % grp)
-                    tags[grp] = paragraph
+        for node,text in self._itertext(my_etree):
+            tag_text = re.findall(mTag, text) 
+            if tag_text:
+                logging.debug("Found grps %s" % (','.join(tag_text)))
+            for tag in tag_text:
+                tag = tag.lower()
+                if tag in tags_to_find:
+                    tags[tag] = node
         return tags
 
-
+    def _get_all_keys_in_list_of_dicts(self, mylist):
+        mykeys = set()
+        for e in mylist:
+            for k in e.keys():
+                mykeys.add(k)
+        return list(mykeys)
 
     def _test_func(self):
         body = self.doc_etree.xpath('/w:document/w:body', namespaces=self.nsprefixes)[0]
-        self._find_tags(self.doc_etree, self.resume_data.keys())
+        self._join_tags(body)
+
+        # Get a list of all the top-level tags
+        tags = self._find_tags(self.doc_etree, self.resume_data.keys())
+        print tags
+        for section_name, node in tags.items():
+            logging.debug("Subtag search for %s" % section_name)
+            subtag_list = self._get_all_keys_in_list_of_dicts(self.resume_data[section_name])
+            logging.debug(subtag_list)
+            subtags = self._find_subtags_in_loop(node)
+            print subtags
         return
-        # Iterate through the resume yaml
-        for section,items in self.resume_data.items():
-            element_in_template = self.doc_etree.xpath('.//w:t[text()[contains(., "[")]]', namespaces=self.nsprefixes)
-            if len(element_in_template)>0:
-                # Get the parent, which is a "w:r" run
 
-                # Save a copy of this origin
-                start_element = element_in_template[0]
-                # Check if this [ ] tag is split up into multiple runs or not
-                # If it is, we need to convert this into a single run
-                if not ']' in start_element.text:
-                    start_element_text = [start_element.text]
-                    element_in_template = element_in_template[0].getparent()
-                    assert element_in_template.tag == '{%s}r' % self.nsprefixes['w']
+    def _itertext(self, my_etree):
+        """Iterator to go through xml tree's text nodes"""
+        for node in my_etree.iter(tag=etree.Element):
+            if self._check_element_is(node, 't'):
+                yield (node, node.text)
 
-                    for element in element_in_template.itersiblings(tag=etree.Element):
-                        # Keep looking for adjacent runs
-                        if element.tag == '{%s}r' % self.nsprefixes['w']:
-                            # Get all the text out of this run and concatanate it
-                            # into the text o the first run
-                            for txt in element.itertext(tag=etree.Element):
-                                start_element_text.append(txt)
-                                element.getparent().remove(element)
-                        else:
-                            element.getparent().remove(element)
-                    start_element_text =  ''.join(start_element_text)
-                    assert start_element_text.endswith("]")
-                    start_element.text = start_element_text[1:-1]
+    def _itersiblingtext(self, my_etree):
+        """Iterator to go through xml tree sibling text nodes"""
+        for sib in my_etree.itersiblings(tag=etree.Element):
+            for node in sib.iter(tag=etree.Element):
+                if self._check_element_is(node, 't'):
+                    yield (node, node.text)
 
-            if len(element_in_template) != 0:
-                print ("found %s" % section)
+    def _join_tags(self, my_etree):
+        chars = []
+        openbrac = False
+        inside_openbrac_node = False
+
+        for node,text in self._itertext(my_etree):
+            # Scan through every node with text
+            for i,c in enumerate(text):
+                # Go through each node's text character by character
+                if c == '[':
+                    openbrac = True # Within a tag
+                    inside_openbrac_node = True # Tag was opened in this node
+                    openbrac_node = node # Save ptr to open bracket containing node
+                    chars = []
+                elif c== ']':
+                    assert openbrac
+                    if inside_openbrac_node:
+                        # Open and close inside same node, no need to do anything
+                        pass
+                    else:
+                        # Open bracket in earlier node, now it's closed
+                        # So append all the chars we've encountered since the openbrac_node '['
+                        # to the openbrac_node
+                        chars.append(']')
+                        openbrac_node.text += ''.join(chars)
+                        # Also, don't forget to remove the characters seen so far from current node
+                        node.text = text[i+1:] 
+                    openbrac = False
+                    inside_openbrac_node = False
+                else:
+                    # Normal text character
+                    if openbrac and inside_openbrac_node:
+                        # No need to copy text
+                        pass
+                    elif openbrac and not inside_openbrac_node:
+                        chars.append(c)
+                    else:
+                        # outside of a open/close
+                        pass
+            if openbrac and not inside_openbrac_node:
+                # Went through all text that is part of an open bracket/close bracket
+                # in other nodes
+                # need to remove this text completely
+                node.text = ""
+            inside_openbrac_node = False
 
     def _get_doc_from_docx (self):
         xml_content = self.zipfile.read('word/document.xml')
@@ -224,6 +231,4 @@ class WordResume(object):
             for filename in filenames:
                 docx.write(os.path.join(tmp_dir,filename), filename)
 
-    def add_item_to_section(self, section_name, item): 
-        pass
 
