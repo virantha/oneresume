@@ -52,7 +52,8 @@ class WordResume(object):
     'dcmitype': 'http://purl.org/dc/dcmitype/',
     'dcterms':  'http://purl.org/dc/terms/'}
 
-    def __init__ (self, template_file, resume_data):
+    def __init__ (self, template_file, resume_data, skip):
+        self.skip = skip
         self.resume_data = resume_data
         self.template = template_file
         self.template_filename = template_file.name
@@ -73,7 +74,73 @@ class WordResume(object):
             all_txt.append(txt)
         return ''.join(all_txt)
 
-    def _find_subtags_in_loop(self, my_etree):
+    def _get_parent_paragraph(self, text_node):
+        self._assert_element_is(text_node, 't')
+        run = tree_node.getparent()
+        self._assert_element_is(run, 'r')
+        paragraph = run.getparent()
+        self._assert_element_is(paragraph, 'p')
+        return paragraph
+
+    def _get_parent_run(self, text_node):
+        self._assert_element_is(text_node, 't')
+        run = tree_node.getparent()
+
+    def _recurse_on_subtags(self, start_node, subtag_struct):
+        """
+            list of dicts
+            tag => loop => tag => loop
+
+            The start_node is always a text node. 
+        """
+        run = self._get_parent_run(start_node)
+
+        for node, text in self._itersiblingtext(run):
+            if '<' in text:
+                assert (subtag_struct is list), \
+                    "Uh oh, expected dict but subtag_stract is %s" % (type(subtag_struct))
+                loop_tree = copy.deepcopy(node.getparent().getparent())
+                node.text = node.text.replace('<','')
+                for subtag in subtag_struct:
+                    self._recurse_on_subtags
+                inside_loop = True
+
+            if '>' in text:
+                assert inside_loop
+                loop_done = True
+                node.text = node.text.replace('>','')
+                body = node.getparent().getparent().getparent()
+                index = body.index(node.getparent().getparent())
+                body.insert(index+1,loop_tree)
+            if inside_loop:
+                tag_text = re.findall(mTag, text)
+
+                if node.text:
+                    print subtag_keys
+                    print subtag_dict
+                    for key in subtag_keys:
+                    #for key in subtag_dict.keys():
+                        if key in subtag_dict:
+                            node.text = node.text.replace('['+key+']', str(subtag_dict[key]))
+                        else:
+                            node.text = node.text.replace('['+key+']', '')
+                for tag in tag_text:
+                    tag = tag.lower()
+                    tags[tag] = node
+                if loop_done:
+                    loop_done = False
+                    inside_loop = False
+                    break
+
+        
+
+    def _find_subtags_in_loop(self, my_etree, subtag_list):
+        """
+            Assumptions:
+                - All loop starts are in their own paragraphs
+                - loops can span multiple paragraphs
+                - Any content after the loop must be in different paragraph
+        """
         mTag = r"""\[(?P<tag>[\s\w\_]+)\]"""
         tags = OrderedDict()
 
@@ -84,45 +151,90 @@ class WordResume(object):
         paragraph = run.getparent()
         self._assert_element_is(paragraph, 'p')
 
-        loop_done = False
-        loop_tree = None
-        for node, text in self._itersiblingtext(paragraph):
-            if '<' in text:
-                logging.debug("Found <")
-                inside_loop = True
-                ind = text.find('<') + 1
-                text = text[ind:]
-                loop_tree = etree.Element(copy.deepcopy(node.getparent().getparent()))
-            if '>' in text:
-                assert inside_loop
-                ind = text.find( '>')
-                text = text[:ind]
-                loop_done = True
-            if inside_loop:
-                tag_text = re.findall(mTag, text)
-                if tag_text:
-                    logging.debug("Found grps %s" % (','.join(tag_text)))
-                for tag in tag_text:
-                    tag = tag.lower()
-                    tags[tag] = node
-                if loop_done:
-                    loop_done = False
-                    inside_loop = False
-                    break
+        body = None
+
+        # Max possible set of subtags
+        subtag_keys = self._get_all_keys_in_list_of_dicts(subtag_list)
+        for subtag_dict in subtag_list:
+            loop_done = False
+            loop_tree = None
+            loop_tree_start = None
+            loop_tree_index = 0
+
+            # Go through once to identify the loop structure to make a copy of it
+            for node, text, node_i in self._itersiblingtext(paragraph):
+                if '<' in text:
+                    logging.debug("Found <")
+                    inside_loop = True
+
+                    loop_tree = copy.deepcopy(node.getparent().getparent())
+                    loop_tree_start = node.getparent().getparent()
+                    node.text = node.text.replace('<','')
+                if '>' in text:
+                    assert inside_loop
+                    logging.debug("Found >")
+                    logging.debug(loop_tree)
+                    loop_done = True
+                    node.text = node.text.replace('>','')
+                    body = node.getparent().getparent().getparent()
+                    index = body.index(node.getparent().getparent())
+                    body.insert(index+1,loop_tree)
+                    logging.debug("Boom!")
+                if inside_loop:
+                    tag_text = re.findall(mTag, text)
+
+                    # Have to check if we've moved to a different paragraph
+                    # If so, we need to add it to the tree
+                    logging.debug("Here")
+                    if node_i != loop_tree_index:
+                        logging.debug("This text %s is in different paragraph" % tag_text)
+                        loop_tree.insert(loop_tree_index+1, copy.deepcopy(node.getparent().getparent()))
+                        loop_tree_index += 1
+                        assert (node_i == loop_tree_index)
+                    if node.text:
+                        for key in subtag_keys:
+                            if key in subtag_dict:
+                                node.text = node.text.replace('['+key+']', str(subtag_dict[key]))
+                            else:
+                                node.text = node.text.replace('['+key+']', '')
+                    for tag in tag_text:
+                        tag = tag.lower()
+                        tags[tag] = node
+                    if loop_done:
+                        logging.debug("ending loop")
+                        loop_done = False
+                        inside_loop = False
+                        loop_tree = None
+                        loop_tree_start = None
+                        loop_tree_index = 0
+                        break
+        #if body:
+            #body.remove(loop_tree)
+        # Remove any [! nodes
+        if '[!' in my_etree.text:
+            paragraph.getparent().remove(paragraph)
         return tags
+        # How to duplicate the tree between the < and >
 
     def _find_tags(self, my_etree, tags_to_find, char_to_stop_on=None):
         tags = {}
         logging.debug("Looking for tags: %s" % (','.join(tags_to_find)))
-        mTag = r"""\[(?P<tag>[\s\w\_]+)\]"""
+        mTag = r"""\[\!?(?P<tag>[\s\w\_]+)\]"""
         for node,text in self._itertext(my_etree):
             tag_text = re.findall(mTag, text) 
             if tag_text:
                 logging.debug("Found grps %s" % (','.join(tag_text)))
             for tag in tag_text:
-                tag = tag.lower()
-                if tag in tags_to_find:
-                    tags[tag] = node
+                tag_lower = tag.lower()
+                if tag_lower in tags_to_find:
+                    tags[tag_lower] = node
+                    # Replace the brackets with nothing
+                    if '[!' in node.text:
+                        #node.text = node.text.replace('[!'+tag+']', 'lsdjflkd')
+                        body = node.getparent().getparent().getparent()
+                        #body.remove(node.getparent().getparent())
+                    else:
+                        node.text = node.text.replace('['+tag+']', tag)
         return tags
 
     def _get_all_keys_in_list_of_dicts(self, mylist):
@@ -135,6 +247,9 @@ class WordResume(object):
     def _test_func(self):
         body = self.doc_etree.xpath('/w:document/w:body', namespaces=self.nsprefixes)[0]
         self._join_tags(body)
+        if self.skip:
+            return
+        print type(self.resume_data)
 
         # Get a list of all the top-level tags
         tags = self._find_tags(self.doc_etree, self.resume_data.keys())
@@ -143,7 +258,8 @@ class WordResume(object):
             logging.debug("Subtag search for %s" % section_name)
             subtag_list = self._get_all_keys_in_list_of_dicts(self.resume_data[section_name])
             logging.debug(subtag_list)
-            subtags = self._find_subtags_in_loop(node)
+            subtags = self._find_subtags_in_loop(node,self.resume_data[section_name])
+            print("Finished find_subtags_in_loop")
             print subtags
         return
 
@@ -155,10 +271,10 @@ class WordResume(object):
 
     def _itersiblingtext(self, my_etree):
         """Iterator to go through xml tree sibling text nodes"""
-        for sib in my_etree.itersiblings(tag=etree.Element):
+        for i, sib in enumerate(my_etree.itersiblings(tag=etree.Element)):
             for node in sib.iter(tag=etree.Element):
                 if self._check_element_is(node, 't'):
-                    yield (node, node.text)
+                    yield (node, node.text, i)
 
     def _join_tags(self, my_etree):
         chars = []
