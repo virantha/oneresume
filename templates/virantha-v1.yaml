@@ -1,26 +1,50 @@
 contact:
-    name: Virantha N. Ekanayake
-    address: 15 S. Chester St, Baltimore, MD
-    phone: (607) 339-8549
-    email: virantha@gmail.com
-    www: http://www.virantha.com
+    -
+        name: Virantha N. Ekanayake
+        address: 15 S. Chester St, Baltimore, MD
+        phone: (607) 339-8549
+        email: virantha@gmail.com
+        www: http://www.virantha.com
+
+skills:
+    - 
+        type: Programming
+        skill_list:  > 
+            Python, Go, R, Java, C/C++, Perl, TCL, Actionscript, PHP/MySQL,
+            Labview, Matlab, Tk/GTk
+
+    -
+        type: Hardware
+        skill_list: >
+            Asynchronous circuits, synchronous circuits, dynamic logic,
+            full-custom layout, CHP, RTL/Verilog/Verilog-A, MIPS/Alpha/ x86/x51
+            assembly 
+
+    - 
+        type: EDA tools
+        skill_list: >
+            HSPICE, HSIM, Spectre, Ultrasim, Nanosim, VCS, NC-verilog, Laker
+            (custom mask tool), Mentor Calibre LVS/DRC/xRC, Synopsys Hercules
+            and PrimeYield LVS/DRC, Star RC, Berkeley Magic
 
 education:
     - 
         degree: PhD and MSc
         university: Cornell University
         address: Ithaca, NY
-        date: 2005/2003
+        date: "'05 and '03"
         field: Computer Engineering
-        thesis: Not important
+        thesis: BITSNAP, a low-energy sensor network synchronous processor with dynamic significance compression
     - 
         degree: BE and AB
         university: Dartmouth College
         address: Hanover, NH
-        date: 1999
-        field: Electrical Engineering/Computer Science
-        thesis: Not important
+        date: "'99"
+        field: Electrical Engineering and Computer Science
+        thesis: A software framework for neuroscience experiments involving auditory and visual stimuli
         honors: magna cum laude with high honors in major
+        overall_gpa: 3.84
+        major_gpa: 3.91
 
 experience:
     - 
@@ -29,17 +53,226 @@ experience:
         position: Co-founder and Chief Technology Officer
         date: "'09 to date"
         summary: >
-            Led full-custom circuit design teams and R&D efforts in
-            high-speed reconfigurable dynamic and static circuits utilizing
-            both synchronous and asynchronous logic.  Wrote patents and
-            managed intellectual property development.  Co-author on 16
-            granted and pending patents.  Individual contributions included
-            CAD flow development, circuit design, simulation, verification,
-            and layout management.  
+            Led full-custom circuit design teams and R&D efforts in high-speed
+            reconfigurable dynamic and static circuits utilizing both synchronous and
+            asynchronous logic in TSMC's planar 40nm and 28nm, and Intel's Tri-Gate 22nm
+            processes.  Wrote patents and managed intellectual property development.
+            Co-author on 16 granted and pending patents.  Individual contributions included
+            CAD flow development, circuit design, simulation, verification, layout
+            management, and top-level integration. 
 
     - 
         company: Achronix Semiconductor Corporation 
-        location: Santa Clara, CA 
+        location: San Jose, CA 
         position: Co-founder and Director of Engineering 
         date: "'05 to '09"
+        summary: >
+            Part of a 5-person team that built Achronix's first commercial 50K LUT
+            FPGA running at 1.5GHz in TSMC's 65nm G+. Designed and verified the
+            reconfigurable logic circuits using high-speed micro-pipelined dynamic logc
+            circuits, including the core lookup tables, carry-chains, sequential elements,
+            and multi-ported register file)  Also led the team that developed Achronix's
+            firstradiation-hardened asynchronous FPGA in BAE's 150nm process.
+
+    - 
+        company: Johns Hopkins University
+        location: Baltimore, MD
+        position: Assistant Professor, Department of Electrical and Computer Engineering
+        date: "'05 to '07"
+        summary: >
+            Founded the asynchronous VLSI research lab at Johns Hopkins, and
+            developed and taught the introductory asynchronous VLSI course and an upper level
+            VLSI course.  
         
+olderexperience:
+    - 
+        company: Cornell University
+        location: Ithaca, NY
+        position: Graduate research and teaching assistant
+        date: "'99 to '05"
+
+    - 
+        company: Intel Corporation
+        location: Hillsboro, OR
+        position: Intern
+        date: "'03"
+        summary: >
+            Designed/simulated a 65nm register-file and explored clock-shaping methodologies
+
+oldinternships:
+    - 
+        company: Telcordia, Applied Research Group
+        location: Morristown, NJ
+        position: Intern
+        summary: >
+            Developed a Java-based smart device manager for IP phones, PCs , and JavaRings
+
+    - 
+        company: Netscape, Java VM Integration Team
+        location: Mountainview, CA
+        position: Intern
+        summary: >
+            Developed test suites and performed quality assurance on VM integration
+        
+activities:
+    - name: ASEE NDSEG graduate fellowship review panelist
+    - name: IEEE ASYNC conference paper reviewer
+    - name: IEEE member
+
+
+publications:
+    - 
+        title: A Radiation Hardened Reconfigurable FPGA
+        authors: S. Ramaswamy, L. Rockett, D. Patel, S. Danziger, R. Manohar, C. Kelly, J. Holt, V. Ekanayake, D. Elftmann
+        journal: Proceedings of the IEEE Aerospace Conference
+        date: March 2009
+
+    -
+        title: A Biologically Inspired Tactile Sensor Array Utilizing Phase-Based Computation
+        authors: Andrew Cassidy and Virantha Ekanayake
+        journal: IEEE International Workshop on Biomedical Circuits and Systems (BioCAS)
+        date: December 2006
+
+    - 
+        title: "BitSNAP: Dynamic Significance Compression for a Low Power Sensor Network Asynchronous Processor"
+        authors: V. Ekanayake, C. Kelly, R. Manohar
+        journal: Proceedings of the 11th IEEE International Symposium on Asynchronous Circuits and Systems
+        date: March 2005
+
+    - 
+        title: An Ultra Low Power Processor for Sensor Networks
+        authors: V.N. Ekanayake, C. Kelly, R. Manohar
+        journal: Proceedings of the 11th Annual International Conference on Architectural Support for Programming Languages and Operating Systems
+        date: October 2004 
+
+    - 
+        title: Asynchronous DRAM Design and Synthesis
+        authors: V.N. Ekanayake, R. Manohar
+        journal: Proceedings of the Ninth International Symposium on Asynchronous Circuits and Systems
+        date: May 2003
+
+    -
+        title: "SNAP: A Sensor Network Asynchronous Processor"
+        authors: C. Kelly, V.N. Ekanayake, and R. Manohar
+        journal: Proceedings of the Ninth International Symposium on Asynchronous Circuits and Systems
+        date: May 2003
+
+
+hobbies:
+    - 
+        hobby: Home automation
+        details: "scripted LUA for Z-wave based home controller"
+
+    - 
+        hobby: WebOS programming
+        details: "developed javascript/css/enyo based apps for home control"
+        
+    -
+        hobby: Actionscript
+        details: modified Chumby linux appliance running Flash to control appliances
+    
+    - 
+        hobby: Other past interests
+        details: >
+            PHP/MySQL based web-sites, PalmOS programming (notification app for Treo
+            smartphone), Linux kernel hacking (custom speed-step governor for Intel Dothan
+            CPU steppings).
+
+patents:
+    - 
+        title: Reset Mechanism Conversion
+        number: 8,443,315
+        assignee: Achronix
+        filed: March 22, 2012
+        issued: May 14, 2013
+        country: US
+
+    - 
+        title: Multi-clock asynchronous logic circuits
+        number: 8,301,933
+        assignee: Achronix
+        filed: September 14, 2009
+        issued: October 30, 2012
+        country: US
+
+    -
+        title: Programmable crossbar structures in asynchronous systems
+        number: 8,300,635
+        assignee: Achronix
+        filed: September 10, 2009
+        issued: October 30, 2012
+        country: US
+
+    - 
+        title: Token enhanced asynchronous conversion of synchronous circuits 
+        number: 8,234,607
+        assignee: Achronix
+        filed: September 15, 2009
+        issued: July 31, 2012
+        country: US
+    -
+        title: Non-predicated to predicated conversion of asynchronous representations 
+        number: 8,191,019
+        assignee: Achronix
+        filed: July 17, 2009
+        issued: May 29, 2012
+        country: US
+    -
+        title: Reset mechanism conversion
+        number: 8,161,435
+        assignee: Achronix
+        filed: July 20, 2009
+        issued: April 17, 2012
+        country: US
+    -
+        title: One phase logic
+        number: 7,932,746
+        assignee: Achronix
+        filed: June 4, 2010
+        issued: April 26, 2011
+        country: US
+    -
+        title: One phase logic
+        number: 8,106,683
+        assignee: Achronix
+        filed: March 9, 2011
+        issued: January 31, 2012
+        country: US
+    -
+        title: Asynchronous conversion circuitry apparatus, systems, and methods
+        number: 8,078,899
+        assignee: Achronix
+        filed: February 8, 2011
+        issued: December 13, 2011
+        country: US
+    -
+        title: Asynchronous circuit representation of synchronous circuit with asynchronous inputs 
+        number: 7,982,502
+        assignee: Achronix
+        filed: September 15, 2009
+        issued: July 19, 2011
+        country: US
+    -
+        title: Asynchronous conversion circuitry apparatus, systems, and methods 
+        number: 7,900,078
+        assignee: Achronix
+        filed: September 14, 2009
+        issued: March 1, 2011
+        country: US
+ 
+    -
+        title: One phase logic
+        number: 20110298495
+        assignee: Achronix
+        filed: March 9, 2011
+        issued: pending
+        country: US
+    -
+        title: Asynchronous conversion circuitry apparatus, systems, and methods 
+        number: 20110130171
+        assignee: Achronix
+        filed: June 2, 2011
+        issued: pending
+        country: US
+ 
+ 

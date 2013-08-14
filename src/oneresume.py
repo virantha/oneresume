@@ -27,6 +27,7 @@ import logging
 import yaml
 
 from resume_word import WordResume
+from resume_text import TextResume
 
 def error(text):
     print("ERROR: %s" % text)
@@ -41,7 +42,7 @@ class OneResume(object):
     def getOptions(self, argv):
         p = argparse.ArgumentParser(prog="oneresume.py")
 
-        allowed_filetypes = ['docx']
+        allowed_filetypes = ['docx', 'mako']
 
         p.add_argument('-t', '--template-file', required=True, type=argparse.FileType('r'),
              dest='template_file', help='Template filename %s' % allowed_filetypes)
@@ -55,11 +56,16 @@ class OneResume(object):
         p.add_argument('-v', '--verbose', action='store_true',
             default=False, dest='verbose', help='Turn on verbose mode')
 
+        p.add_argument('-s', '--skip-substitution', action='store_true',
+            default=False, dest='skip', help='Skip the text substitution and just write out the template as is (useful for pretty-printing')
+
 
         args = p.parse_args(argv)
 
         self.debug = args.debug
         self.verbose = args.verbose
+        self.skip = args.skip
+
         if args.debug:
             logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
@@ -91,7 +97,9 @@ class OneResume(object):
         # Read the command line options
         self.getOptions(argv)
 
-        word = WordResume(self.template_file, self.resume)
+        #word = WordResume(self.template_file, self.resume, self.skip)
+        text = TextResume(self.template_file, self.resume, self.skip)
+        text.render("myresume.txt")
         #self.clean_up_files((tiff_filename, hocr_filename))
 
 if __name__ == '__main__':
