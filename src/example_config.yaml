@@ -1,0 +1,12 @@
+- data: ../templates/example_resume.yaml
+  outputs: 
+    -   
+        format: Word
+        template: ../templates/word_resume.docx
+        output: myresume.docx
+    - 
+        format: Text
+        template: ../templates/text_resume.mako
+        output: myresume.txt
+
+     
