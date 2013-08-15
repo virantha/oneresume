@@ -12,6 +12,17 @@ uses a simple made-up syntax.
 
 Usage: 
 ------
+To run the included examples, do the following:
+
+    cd src
+    python oneresume.py batch -c example_config.yaml
+
+This will generate the following files:
+- myresume.txt
+- myresume.docx
+
+You can also run the script on a single conversion by doing something like the following:
+
     python oneresume.py single -y resume.yaml -t template.docx -o myresume_output.docx -f Word
 
     --> myresume_output.docx will be generated

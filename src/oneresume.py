@@ -20,6 +20,7 @@
         - Write your resume in YAML
         - Output it to word, html, txt, etc
 """
+from __future__ import print_function
 
 import argparse
 import sys, os
@@ -135,11 +136,10 @@ class OneResume(object):
                     error("File type/extension %s is not one of following: %s" % (filetype,' '.join(self.allowed_filetypes)))
                 output_filename = output['output']
                 # Instantiate the required conversion plugin
-                logging.info("Creating plugin %sResume" % fmt)
+                print ("Creating %s ..." % output_filename, end='')
                 text = Plugin.registered['%sResume' % fmt](template_file, self.resume, self.skip)
-                logging.info("running plugin...")
                 text.render(output_filename)
-                logging.info("done\n")
+                print (" done")
 
 
     def go(self, argv):
