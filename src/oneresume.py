@@ -27,8 +27,6 @@ import logging
 import yaml
 from plugin import Plugin
 
-from resume_word import WordResume
-#from resume_text import TextResume
 
 def error(text):
     print("ERROR: %s" % text)
@@ -38,7 +36,9 @@ def error(text):
 class OneResume(object):
 
     def __init__ (self):
-        Plugin.load("plugins/")
+        #Plugin.load("plugins/")
+        script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+        Plugin.load(os.path.join(script_dir,"plugins"))
         self.allowed_filetypes = []
         self.allowed_formats = []
         for p, p_class in Plugin.registered.items():
@@ -135,8 +135,11 @@ class OneResume(object):
                     error("File type/extension %s is not one of following: %s" % (filetype,' '.join(self.allowed_filetypes)))
                 output_filename = output['output']
                 # Instantiate the required conversion plugin
+                logging.info("Creating plugin %sResume" % fmt)
                 text = Plugin.registered['%sResume' % fmt](template_file, self.resume, self.skip)
+                logging.info("running plugin...")
                 text.render(output_filename)
+                logging.info("done\n")
 
 
     def go(self, argv):

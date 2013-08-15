@@ -1,0 +1,125 @@
+contact:
+    -
+        name: Your Name
+        address: 1111, Somewhere road, Some Town
+        phone: (555) 555-5555
+        email: youremail@email.com
+        www: http://www.yourweb.com
+
+skills:
+    - 
+        type: Programming
+        skill_list:  > 
+            Language 1, Language 2,
+            Language 3
+
+    -
+        type: Hardware
+        skill_list: >
+            Lots of circuits
+
+education:
+    - 
+        degree: PhD 
+        university: Some University
+        address: Sometown, NY
+        date: "'05 and '03"
+        field: Computer Science
+        thesis: your thesis title
+    - 
+        degree: BSc
+        university: Some University
+        address: Sometownn, NY
+        date: "'99"
+        field: Electrical Engineering 
+        thesis: Another thesis
+        honors: summa cum laude
+        overall_gpa: 4.0
+        major_gpa: 4.0
+
+experience:
+    - 
+        company: Your company
+        location: Sometown, NY
+        position: Some title
+        date: "'00 to date"
+        summary: >
+            Did a lot of interesting things
+    - 
+        company: Your company
+        location: Sometown, CA
+        position: Some title
+        date: "'05 to '09"
+        summary: >
+            Did even more interesting things
+        
+olderexperience:
+    - 
+        company: Your old company
+        location: Sometown, NY
+        position: Some boring position
+        date: "'99 to '05"
+
+    - 
+        company: Your second old company
+        location: Sometown, CA
+        position: My position
+        date: "'03"
+        summary: >
+            Did some stuff I can't remember
+
+        
+activities:
+    - name: Activity 1
+    - name: Activity 2
+    - name: Activity 3
+
+
+publications:
+    - 
+        title: Some title
+        authors: J. Doe, J. Smith
+        journal: Proceedings of something
+        date: March 2009
+
+    -
+        title: Another title
+        authors: Who Am I, U. Know
+        journal: IEEE something or the other
+        date: December 2006
+
+
+hobbies:
+    - 
+        hobby: Hobby 1
+        details: Does anyone care?
+
+    - 
+        hobby: Hobby 2
+        details: I'm pretty sure no one cares
+        
+
+patents:
+    - 
+        title: Something obvious
+        number: 1,111,111
+        assignee: Your company
+        filed: April 1, 1912
+        issued: April 1, 2012 
+        country: US
+
+    - 
+        title: Something even more obvious
+        number: 1,111,112
+        assignee: Your old company
+        filed: September 1, 2009
+        issued: September 2, 2012
+        country: US
+
+    - 
+        title: Why did I bother filing this
+        number: 2012923029
+        assignee: Your company
+        filed: September 1, 2009
+        issued: pending
+        country: US
