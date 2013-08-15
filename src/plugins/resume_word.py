@@ -13,16 +13,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# Certain portions of this file (namely the nsprefixes) are borrowed from
+# the python-docx project and are provided under the following copyright:
+# Copyright (c) 2009-2010 Mike MacCana
+
+#Permission is hereby granted, free of charge, to any person
+#obtaining a copy of this software and associated documentation
+#files (the "Software"), to deal in the Software without
+#restriction, including without limitation the rights to use,
+#copy, modify, merge, publish, distribute, sublicense, and/or sell
+#copies of the Software, and to permit persons to whom the
+#Software is furnished to do so, subject to the following
+#conditions:
+
+#The above copyright notice and this permission notice shall be
+#included in all copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+#OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+#HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+#FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+#OTHER DEALINGS IN THE SOFTWARE.
+
+
 import zipfile, re
 import os,shutil
+from plugin import Plugin
 from lxml import etree
 import logging
 import itertools
 import copy
 from collections import OrderedDict
+import tempfile
 
-class WordResume(object):
+from plugin import Plugin
 
+class WordResume(Plugin):
+
+    template_file_extension = 'docx'
     nsprefixes = {
     'mo': 'http://schemas.microsoft.com/office/mac/office/2008/main',
     'o':  'urn:schemas-microsoft-com:office:office',
@@ -55,13 +87,18 @@ class WordResume(object):
     def __init__ (self, template_file, resume_data, skip):
         self.skip = skip
         self.resume_data = resume_data
-        self.template = template_file
-        self.template_filename = template_file.name
+        self.template_filename = template_file
+        self.template = open (self.template_filename)
+
         self.zipfile = zipfile.ZipFile(self.template)
         self.doc_etree = self._get_doc_from_docx()
 
-        self._test_func()
-        self._write_and_close_docx(self.doc_etree)
+        #self._test_func()
+        #self._write_and_close_docx(self.doc_etree)
+
+    def render(self, output_filename):
+        self._parse_xml()
+        self._write_and_close_docx(self.doc_etree, output_filename)
 
     def _check_element_is(self, element, type_char):
         return element.tag == '{%s}%s' % (self.nsprefixes['w'],type_char)
@@ -232,7 +269,8 @@ class WordResume(object):
                 mykeys.add(k)
         return list(mykeys)
 
-    def _test_func(self):
+    def _parse_xml(self):
+
         body = self.doc_etree.xpath('/w:document/w:body', namespaces=self.nsprefixes)[0]
         self._join_tags(body)
         if self.skip:
@@ -314,12 +352,13 @@ class WordResume(object):
         xml_content = self.zipfile.read('word/document.xml')
         return etree.fromstring(xml_content)
 
-    def _write_and_close_docx (self, xml_content):
+    def _write_and_close_docx (self, xml_content, output_filename):
         # Extract all the files and zip it up
-        tmp_dir = 'tmp'
+        #tmp_dir = 'tmp'
+        tmp_dir = tempfile.mkdtemp()
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
-        os.makedirs(tmp_dir)
+        #os.makedirs(tmp_dir)
 
         self.zipfile.extractall(tmp_dir)
         with open(os.path.join(tmp_dir,'word/document.xml'), 'w') as f:
@@ -330,9 +369,12 @@ class WordResume(object):
         filenames = self.zipfile.namelist()
 
         # Copy the zip file
-        zip_copy_filename = self.template_filename.replace(".docx", "-update.docx")
+        #zip_copy_filename = self.template_filename.replace(".docx", "-update.docx")
+        zip_copy_filename = output_filename
         with zipfile.ZipFile(zip_copy_filename, "w") as docx:
             for filename in filenames:
                 docx.write(os.path.join(tmp_dir,filename), filename)
+
+        shutil.rmtree(tmp_dir)
 
 

@@ -16,15 +16,16 @@
 import logging
 from mako.template import Template
 from textwrap import TextWrapper
+from plugin import Plugin
 
-class TextResume(object):
+class TextResume(Plugin):
 
+    template_file_extension = 'mako'
 
     def __init__ (self, template_file, resume_data, skip):
         self.skip = skip
         self.resume_data = resume_data
-        self.template = template_file
-        self.template_filename = template_file.name
+        self.template_filename = template_file
         self.indent_spaces = 2
 
     def render(self, output_filename):

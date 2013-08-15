@@ -25,9 +25,10 @@ import argparse
 import sys, os
 import logging
 import yaml
+from plugin import Plugin
 
 from resume_word import WordResume
-from resume_text import TextResume
+#from resume_text import TextResume
 
 def error(text):
     print("ERROR: %s" % text)
@@ -37,27 +38,45 @@ def error(text):
 class OneResume(object):
 
     def __init__ (self):
-        pass
+        Plugin.load("plugins/")
+        self.allowed_filetypes = []
+        self.allowed_formats = []
+        for p, p_class in Plugin.registered.items():
+            print("Registered output plugin type %s" % p)
+            self.allowed_filetypes.append(p_class.template_file_extension)
+            self.allowed_formats.append(p.split('Resume')[0])
 
     def getOptions(self, argv):
         p = argparse.ArgumentParser(prog="oneresume.py")
-
-        allowed_filetypes = ['docx', 'mako']
-
-        p.add_argument('-t', '--template-file', required=True, type=argparse.FileType('r'),
-             dest='template_file', help='Template filename %s' % allowed_filetypes)
-
-        p.add_argument('-y', '--yaml-resume-file', required=True, type=argparse.FileType('r'),
-             dest='resume_file', help='Resume filename')
 
         p.add_argument('-d', '--debug', action='store_true',
             default=False, dest='debug', help='Turn on debugging')
 
         p.add_argument('-v', '--verbose', action='store_true',
             default=False, dest='verbose', help='Turn on verbose mode')
-
         p.add_argument('-s', '--skip-substitution', action='store_true',
             default=False, dest='skip', help='Skip the text substitution and just write out the template as is (useful for pretty-printing')
+
+        # Now split up the options on whether we just run one template rendering
+        # or use a "batch" mode to read a yaml config file to run multiple
+        subparsers = p.add_subparsers(help="Type of processing to run",
+                                        dest = "subparser_name")
+
+        parser_singlefile = subparsers.add_parser('single', help='Run a single conversion')
+        parser_singlefile.add_argument('-t', '--template-file', required=True, 
+            help='Template filename %s' % self.allowed_filetypes)
+        parser_singlefile.add_argument('-y', '--yaml-resume-file', required=True, 
+            help='Resume yaml filename')
+        parser_singlefile.add_argument('-o', '--output-file', required=True, 
+            help='Output filename')
+        parser_singlefile.add_argument('-f', '--format', required=True, 
+            choices = self.allowed_formats,
+            help='Conversion type %s' % self.allowed_formats )
+
+
+        parser_configfile = subparsers.add_parser('batch', help="Run multiple conversions using a yaml config file as input")
+        parser_configfile.add_argument('-c', '--config-file', required=True, type=argparse.FileType('r'),
+             help='configuration YAML filename ' )
 
 
         args = p.parse_args(argv)
@@ -73,34 +92,57 @@ class OneResume(object):
             logging.basicConfig(level=logging.INFO, format='%(message)s')
 
         # Normal options
-        self.template_file = args.template_file
-        logging.debug("template filename is %s" % (self.template_file.name)) 
-        filebasename,filetype = os.path.splitext(self.template_file.name)
-        if filetype[1:] not in allowed_filetypes:
-            error("File type/extension %s is not one of following: %s" % (filetype,' '.join(allowed_filetypes)))
+        if args.subparser_name == 'single':
+            self.config = yaml.load("""-
+                                        data: %s
+                                        outputs:
+                                            - 
+                                                format: %s
+                                                template: %s
+                                                output: %s
+                                    """ % (args.yaml_resume_file, args.format, args.template_file, args.output_file ))
+        else:
+            config_file = args.config_file
+            logging.debug("Reading configuration file %s" % config_file)
+            self.config = yaml.load(config_file)
+            config_file.close()
 
-        self.resume = yaml.load(args.resume_file)
-        args.resume_file.close()
-        logging.debug(self.resume)
+    def run_rendering(self):
+        """
+            Based on self.config, instantiate each plugin conversion and run it
+        """
+        
+        if not isinstance(self.config, list):
+            # If the config was not a list, just convert this one element into a list
+            self.config = [self.config]
 
-            
+        for i, c in enumerate(self.config):
+            # For each conversion
+            if not 'data' in c:
+                # Check that the yaml resume file is specified
+                error("Configuration file has not defined 'data' with resume yaml file")
+            else:
+                with open(c['data']) as resume_file:
+                    self.resume = yaml.load(resume_file)
 
-    
-    def clean_up_files(self, files):
-        for file in files:
-            try:
-                os.remove(file)
-            except:
-                logging.info("Error removing file %s .... continuing" % file)
+            for output in c['outputs']:
+                fmt = output['format']
+                # Check that we have a plugin whose classname starts with this format
+                assert any([x.startswith(fmt) for x in Plugin.registered])
+                template_file = output['template']
+                filebasename,filetype = os.path.splitext(template_file)
+                if filetype[1:] not in self.allowed_filetypes:
+                    error("File type/extension %s is not one of following: %s" % (filetype,' '.join(self.allowed_filetypes)))
+                output_filename = output['output']
+                # Instantiate the required conversion plugin
+                text = Plugin.registered['%sResume' % fmt](template_file, self.resume, self.skip)
+                text.render(output_filename)
+
 
     def go(self, argv):
         # Read the command line options
         self.getOptions(argv)
-
-        #word = WordResume(self.template_file, self.resume, self.skip)
-        text = TextResume(self.template_file, self.resume, self.skip)
-        text.render("myresume.txt")
-        #self.clean_up_files((tiff_filename, hocr_filename))
+        self.run_rendering()
 
 if __name__ == '__main__':
     script = OneResume()
