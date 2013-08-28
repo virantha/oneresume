@@ -125,6 +125,7 @@ class WordResume(Plugin):
                 - All loop starts are in their own paragraphs
                 - loops can span multiple paragraphs
                 - Any content after the loop must be in different paragraph
+                - No tables anywhere!
         """
         mTag = r"""\[(?P<tag>[\s\w\_]+)\]"""
         tags = OrderedDict()
@@ -193,7 +194,7 @@ class WordResume(Plugin):
             logging.debug("Applying loop element: %s" % subtag_dict)
 
             for node, text, node_i in self._itersiblingtext(loop_instance[-1]):
-                logging.debug("Going trhough text")
+                logging.debug("Going through text")
                 if '<' in text:
                     node.text = node.text.replace('<','')
                 if '>' in text:
@@ -353,14 +354,15 @@ class WordResume(Plugin):
         return etree.fromstring(xml_content)
 
     def _write_and_close_docx (self, xml_content, output_filename):
-        # Extract all the files and zip it up
-        #tmp_dir = 'tmp'
+        """ Create a temp directory, expand the original docx zip.
+            Write the modified xml to word/document.xml
+            Zip it up as the new docx
+        """
+
         tmp_dir = tempfile.mkdtemp()
-        if os.path.exists(tmp_dir):
-            shutil.rmtree(tmp_dir)
-        #os.makedirs(tmp_dir)
 
         self.zipfile.extractall(tmp_dir)
+
         with open(os.path.join(tmp_dir,'word/document.xml'), 'w') as f:
             xmlstr = etree.tostring (xml_content, pretty_print=True)
             f.write(xmlstr)
@@ -368,13 +370,13 @@ class WordResume(Plugin):
         # Get a list of all the files in the original docx zipfile
         filenames = self.zipfile.namelist()
 
-        # Copy the zip file
-        #zip_copy_filename = self.template_filename.replace(".docx", "-update.docx")
+        # Now, create the new zip file and add all the filex into the archive
         zip_copy_filename = output_filename
         with zipfile.ZipFile(zip_copy_filename, "w") as docx:
             for filename in filenames:
                 docx.write(os.path.join(tmp_dir,filename), filename)
 
+        # Clean up the temp dir
         shutil.rmtree(tmp_dir)
 
 
