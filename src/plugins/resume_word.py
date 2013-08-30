@@ -133,32 +133,41 @@ class WordResume(Plugin):
         # Get the parent paragraph 
         paragraph = self._get_parent_paragraph(my_etree)
 
-        body = None
-
+        # Variables to track the state of our traversals
         loop_done = False
-        loop_tree = None
         loop_tree_index = 0
         inside_loop = False
+
+        # Keep track of all the elements belonging to the loop body
+        # so that we can delete the original loop definition once
+        # we are done instancing the loop.
         elements_to_delete = []
-        loop_tree = etree.Element("root")
+        # build up a copy of the loop sub-tree in loop_tree
+        # We will instance this as many times as needed
+        loop_tree = etree.Element("root")  # Keep a copy of the loop that we find
         for node, text, node_index in self._itersiblingtext(paragraph):
             if '<' in text:
                 logging.debug("Found <")
-                inside_loop = True
-                
-                loop_tree_start = (node.getparent().getparent())
-                elements_to_delete.append(loop_tree_start)
-                self._assert_element_is(loop_tree_start, 'p')
-                #loop_tree = copy.deepcopy(loop_tree_start)
-                loop_tree.insert(0, copy.deepcopy(loop_tree_start))
-                logging.debug(etree.tostring(loop_tree, pretty_print=True))
+                if inside_loop:  # embedded loop!
+                    # Let's recurse on this embedded loop
+                    #  We need the immediately preceding tag text to figure
+                    # out what dict we need to recurse on
+                    self._find_subtags_in_loop
+                else:
+                    inside_loop = True
+                    loop_tree_start = (node.getparent().getparent())
+                    self._assert_element_is(loop_tree_start, 'p')
+
+                    elements_to_delete.append(loop_tree_start)
+                    loop_tree.insert(0, copy.deepcopy(loop_tree_start))
+
+                    logging.debug(etree.tostring(loop_tree, pretty_print=True))
             if '>' in text:
                 assert inside_loop
                 logging.debug("Found >")
                 loop_done = True
                 if node_index != loop_tree_index:
                     self._assert_element_is(node.getparent().getparent(), 'p')
-                    #loop_tree.append(copy.deepcopy(node.getparent().getparent()))
                     loop_tree.insert(loop_tree_index+1,  copy.deepcopy(node.getparent().getparent()))
                     loop_tree_index += 1
                     elements_to_delete.append(node.getparent().getparent())
@@ -171,11 +180,10 @@ class WordResume(Plugin):
                 if node_index != loop_tree_index:
                     logging.debug("Adding inside loop text node")
                     self._assert_element_is(node.getparent().getparent(), 'p')
-                    #loop_tree.insert(loop_tree_index+1, copy.deepcopy(node.getparent().getparent()))
-                    #loop_tree.append(copy.deepcopy(node.getparent().getparent()))
+
                     loop_tree.insert(loop_tree_index+1,  copy.deepcopy(node.getparent().getparent()))
-                    #etree.SubElement(loop_tree, copy.deepcopy(node.getparent().getparent()))
                     loop_tree_index += 1
+
                     logging.debug(etree.tostring(loop_tree, pretty_print=True))
                     elements_to_delete.append(node.getparent().getparent())
                     assert (node_index == loop_tree_index)
